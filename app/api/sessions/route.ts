@@ -41,9 +41,11 @@ export async function POST(request: NextRequest) {
       .select('id')
       .single()
 
-    if (error || !data) {
-      console.error('Failed to create session:', error)
-      return NextResponse.json({ error: 'Failed to create session', detail: JSON.stringify(error) }, { status: 500 })
+    if (error) {
+      return NextResponse.json({ error: 'supabase_error', msg: error.message, hint: error.hint, code: error.code }, { status: 500 })
+    }
+    if (!data) {
+      return NextResponse.json({ error: 'no_data_returned' }, { status: 500 })
     }
 
     return NextResponse.json(
