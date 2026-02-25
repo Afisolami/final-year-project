@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     if (error || !data) {
       console.error('Failed to create session:', error)
-      return NextResponse.json({ error: 'Failed to create session', detail: error?.message, code: error?.code }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to create session', detail: JSON.stringify(error) }, { status: 500 })
     }
 
     return NextResponse.json(
