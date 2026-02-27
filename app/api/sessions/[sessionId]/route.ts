@@ -3,10 +3,10 @@ import { createServerClient } from '@/lib/supabase/server'
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   const supabase = createServerClient()
-  const { sessionId } = params
+  const { sessionId } = await params
 
   const { data: session, error } = await supabase
     .from('sessions')

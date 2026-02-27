@@ -4,7 +4,7 @@ import SessionPageClient from '@/components/session/SessionPageClient'
 import type { Metadata } from 'next'
 
 interface Props {
-  params: { sessionId: string }
+  params: Promise<{ sessionId: string }>
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -12,12 +12,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function SessionPage({ params }: Props) {
+  const { sessionId } = await params
   const supabase = createServerClient()
 
   const { data: session } = await supabase
     .from('sessions')
     .select('id, lecture_name, duration_minutes, started_at, ends_at, expires_at, status, created_at')
-    .eq('id', params.sessionId)
+    .eq('id', sessionId)
     .single()
 
   if (!session) notFound()
@@ -30,14 +31,14 @@ export default async function SessionPage({ params }: Props) {
     await supabase
       .from('sessions')
       .update({ status: 'ended' })
-      .eq('id', params.sessionId)
+      .eq('id', sessionId)
     session.status = 'ended'
   }
 
   const { data: attendees } = await supabase
     .from('attendees')
     .select('id, full_name, matric_number, level, submitted_at')
-    .eq('session_id', params.sessionId)
+    .eq('session_id', sessionId)
     .order('submitted_at', { ascending: true })
 
   return (

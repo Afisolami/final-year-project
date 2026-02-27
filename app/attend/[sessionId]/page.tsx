@@ -8,17 +8,19 @@ export const metadata: Metadata = {
 }
 
 interface Props {
-  params: { sessionId: string }
-  searchParams: { t?: string }
+  params: Promise<{ sessionId: string }>
+  searchParams: Promise<{ t?: string }>
 }
 
 export default async function AttendPage({ params, searchParams }: Props) {
+  const { sessionId } = await params
+  const { t } = await searchParams
   const supabase = createServerClient()
 
   const { data: session } = await supabase
     .from('sessions')
     .select('id, lecture_name, status, ends_at, expires_at')
-    .eq('id', params.sessionId)
+    .eq('id', sessionId)
     .single()
 
   // Session doesn't exist or 24hr window has passed
@@ -41,7 +43,7 @@ export default async function AttendPage({ params, searchParams }: Props) {
   }
 
   // No token means they navigated to the URL directly (not via QR scan)
-  if (!searchParams.t) {
+  if (!t) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <SubmissionResult type="qr_expired" lectureName={session.lecture_name} />
@@ -53,7 +55,7 @@ export default async function AttendPage({ params, searchParams }: Props) {
     <AttendanceFormClient
       sessionId={session.id}
       lectureName={session.lecture_name}
-      token={searchParams.t}
+      token={t}
     />
   )
 }

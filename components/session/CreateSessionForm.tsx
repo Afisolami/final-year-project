@@ -59,7 +59,11 @@ export default function CreateSessionForm() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error ?? 'Failed to create session. Please try again.')
+        if (data.error === 'supabase_error') {
+          setError(data.msg ?? 'Database error. Please try again.')
+        } else {
+          setError(data.error ?? 'Failed to create session. Please try again.')
+        }
         return
       }
 
