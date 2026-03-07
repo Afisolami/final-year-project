@@ -37,7 +37,8 @@ export async function GET(
   const timeWindow = getCurrentTimeWindow()
   const token = generateToken(session.id, session.secret, 0)
   const color = getColorForWindow(timeWindow)
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  // const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'localhost:3000'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://final-year-project-7pvf-63qk99sss.vercel.app'
 
   return NextResponse.json({
     status: 'active',
