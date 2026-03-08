@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Trash2, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -12,7 +10,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { useToast } from '@/hooks/use-toast'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import type { Attendee } from '@/types'
 
@@ -28,8 +25,6 @@ export default function AttendeeTable({
   readOnly = false,
 }: AttendeeTableProps) {
   const [attendees, setAttendees] = useState(initialAttendees)
-  const [removingId, setRemovingId] = useState<string | null>(null)
-  const { toast } = useToast()
   const channelRef = useRef<ReturnType<typeof getSupabaseClient>['channel'] | null>(null)
 
   // Set up Realtime subscription for live updates
@@ -78,37 +73,6 @@ export default function AttendeeTable({
     }
   }, [sessionId, readOnly])
 
-  async function handleRemove(attendeeId: string, name: string) {
-    setRemovingId(attendeeId)
-    try {
-      const res = await fetch(
-        `/api/sessions/${sessionId}/attendees/${attendeeId}`,
-        { method: 'DELETE' }
-      )
-
-      if (!res.ok) {
-        toast({
-          title: 'Failed to remove attendee',
-          description: 'Please try again.',
-          variant: 'destructive',
-        })
-        return
-      }
-
-      // Optimistic removal — Realtime DELETE event will be a no-op
-      setAttendees(prev => prev.filter(a => a.id !== attendeeId))
-      toast({ title: `${name} removed from attendance.` })
-    } catch {
-      toast({
-        title: 'Something went wrong',
-        description: 'Please try again.',
-        variant: 'destructive',
-      })
-    } finally {
-      setRemovingId(null)
-    }
-  }
-
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -134,7 +98,6 @@ export default function AttendeeTable({
                 <TableHead>Matric No.</TableHead>
                 <TableHead>Level</TableHead>
                 <TableHead>Time</TableHead>
-                {!readOnly && <TableHead className="w-10" />}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -149,29 +112,13 @@ export default function AttendeeTable({
                     <Badge variant="outline">{attendee.level}</Badge>
                   </TableCell>
                   <TableCell className="text-sm text-gray-500 font-mono">
-                    {new Date(attendee.submitted_at).toLocaleTimeString('en-GB', {
-                      hour: '2-digit',
+                    {new Date(attendee.submitted_at).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
                       minute: '2-digit',
                       second: '2-digit',
+                      hour12: true,
                     })}
                   </TableCell>
-                  {!readOnly && (
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-gray-400 hover:text-red-600"
-                        onClick={() => handleRemove(attendee.id, attendee.full_name)}
-                        disabled={removingId === attendee.id}
-                      >
-                        {removingId === attendee.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-3.5 w-3.5" />
-                        )}
-                      </Button>
-                    </TableCell>
-                  )}
                 </TableRow>
               ))}
             </TableBody>
