@@ -17,7 +17,7 @@ export default async function SessionPage({ params }: Props) {
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, lecture_name, duration_minutes, started_at, ends_at, expires_at, status, created_at')
+    .select('id, lecture_name, duration_minutes, started_at, ends_at, expires_at, status, created_at, geo_enabled, latitude, longitude, radius_meters')
     .eq('id', sessionId)
     .single()
 
@@ -37,7 +37,7 @@ export default async function SessionPage({ params }: Props) {
 
   const { data: attendees } = await supabase
     .from('attendees')
-    .select('id, full_name, matric_number, level, submitted_at')
+    .select('id, full_name, matric_number, level, submitted_at, latitude, longitude')
     .eq('session_id', sessionId)
     .order('submitted_at', { ascending: true })
 

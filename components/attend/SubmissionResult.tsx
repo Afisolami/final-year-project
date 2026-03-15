@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react'
+import { CheckCircle, XCircle, Clock, AlertTriangle, MapPinOff, Navigation } from 'lucide-react'
 
 type ResultType =
   | 'success'
@@ -9,11 +9,14 @@ type ResultType =
   | 'qr_expired'
   | 'session_ended'
   | 'session_not_found'
+  | 'location_denied'
+  | 'out_of_range'
   | 'error'
 
 interface SubmissionResultProps {
   type: ResultType
   lectureName?: string
+  outOfRangeInfo?: { distance: number; radius: number }
 }
 
 const RESULT_CONFIG: Record<
@@ -56,6 +59,18 @@ const RESULT_CONFIG: Record<
     description: 'This QR code is not valid or the session no longer exists.',
     color: 'text-gray-600',
   },
+  location_denied: {
+    icon: <MapPinOff className="h-14 w-14 text-red-500" />,
+    title: 'Location access denied',
+    description: 'This session requires location verification. Please allow location access in your browser settings and try again.',
+    color: 'text-red-600',
+  },
+  out_of_range: {
+    icon: <Navigation className="h-14 w-14 text-orange-500" />,
+    title: 'Outside allowed area',
+    description: 'You are too far from the class location to sign attendance.',
+    color: 'text-orange-600',
+  },
   error: {
     icon: <AlertTriangle className="h-14 w-14 text-red-500" />,
     title: 'Something went wrong',
@@ -64,7 +79,7 @@ const RESULT_CONFIG: Record<
   },
 }
 
-export default function SubmissionResult({ type, lectureName }: SubmissionResultProps) {
+export default function SubmissionResult({ type, lectureName, outOfRangeInfo }: SubmissionResultProps) {
   const config = RESULT_CONFIG[type]
 
   return (
@@ -76,6 +91,11 @@ export default function SubmissionResult({ type, lectureName }: SubmissionResult
           <p className="text-sm font-medium text-gray-700">{lectureName}</p>
         )}
         <p className="text-sm text-gray-500 max-w-xs">{config.description}</p>
+        {type === 'out_of_range' && outOfRangeInfo && (
+          <p className="text-xs text-gray-400 mt-1">
+            You are ~{outOfRangeInfo.distance} m away (limit: {outOfRangeInfo.radius} m)
+          </p>
+        )}
       </div>
     </div>
   )

@@ -5,7 +5,7 @@ import { createServerClient } from '@/lib/supabase/server'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { lecture_name, duration_minutes } = body
+    const { lecture_name, duration_minutes, geo_enabled, latitude, longitude, radius_meters } = body
 
     // Validate inputs
     if (!lecture_name || typeof lecture_name !== 'string' || lecture_name.trim() === '') {
@@ -19,6 +19,15 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    const geoEnabled = geo_enabled === true
+    if (geoEnabled && (typeof latitude !== 'number' || typeof longitude !== 'number')) {
+      return NextResponse.json({ error: 'location_required' }, { status: 400 })
+    }
+
+    const radius = typeof radius_meters === 'number'
+      ? Math.max(50, Math.min(500, radius_meters))
+      : 100
 
     const supabase = createServerClient()
 
@@ -37,6 +46,10 @@ export async function POST(request: NextRequest) {
         expires_at: expires_at.toISOString(),
         secret,
         status: 'active',
+        geo_enabled: geoEnabled,
+        latitude: geoEnabled ? latitude : null,
+        longitude: geoEnabled ? longitude : null,
+        radius_meters: radius,
       })
       .select('id')
       .single()

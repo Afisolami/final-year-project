@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { validateToken } from '@/lib/tokens'
+import { haversineDistance } from '@/lib/geo'
 import { LEVELS } from '@/types'
 
 export async function POST(
@@ -10,7 +11,7 @@ export async function POST(
   try {
     const { sessionId } = await params
     const body = await request.json()
-    const { token, full_name, matric_number, level, device_id } = body
+    const { token, full_name, matric_number, level, device_id, latitude, longitude } = body
 
     // Validate all required fields are present
     if (!token || !full_name || !matric_number || !level || !device_id) {
@@ -25,7 +26,7 @@ export async function POST(
 
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
-      .select('id, secret, status, ends_at, expires_at')
+      .select('id, secret, status, ends_at, expires_at, geo_enabled, latitude, longitude, radius_meters')
       .eq('id', sessionId)
       .single()
 
@@ -47,6 +48,27 @@ export async function POST(
       return NextResponse.json({ error: 'qr_expired' }, { status: 400 })
     }
 
+    // Geo-fencing check
+    if (session.geo_enabled) {
+      if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+        return NextResponse.json({ error: 'location_required' }, { status: 400 })
+      }
+
+      const distance = haversineDistance(
+        session.latitude,
+        session.longitude,
+        latitude,
+        longitude
+      )
+
+      if (distance > session.radius_meters) {
+        return NextResponse.json(
+          { error: 'out_of_range', distance_m: Math.round(distance), radius_m: session.radius_meters },
+          { status: 403 }
+        )
+      }
+    }
+
     // Insert attendance record
     const { error: insertError } = await supabase.from('attendees').insert({
       session_id: sessionId,
@@ -54,6 +76,8 @@ export async function POST(
       matric_number: matric_number.trim().toUpperCase(),
       level,
       device_id,
+      latitude: typeof latitude === 'number' ? latitude : null,
+      longitude: typeof longitude === 'number' ? longitude : null,
     })
 
     if (insertError) {

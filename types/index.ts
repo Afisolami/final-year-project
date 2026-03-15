@@ -8,6 +8,10 @@ export interface Session {
   status: 'active' | 'ended'
   secret: string
   created_at: string
+  geo_enabled: boolean
+  latitude: number | null
+  longitude: number | null
+  radius_meters: number
 }
 
 export interface Attendee {
@@ -18,6 +22,8 @@ export interface Attendee {
   level: '100L' | '200L' | '300L' | '400L' | '500L' | 'Postgraduate'
   device_id: string
   submitted_at: string
+  latitude: number | null
+  longitude: number | null
 }
 
 export interface QRData {

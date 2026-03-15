@@ -19,7 +19,7 @@ export default async function AttendPage({ params, searchParams }: Props) {
 
   const { data: session } = await supabase
     .from('sessions')
-    .select('id, lecture_name, status, ends_at, expires_at')
+    .select('id, lecture_name, status, ends_at, expires_at, geo_enabled')
     .eq('id', sessionId)
     .single()
 
@@ -56,6 +56,7 @@ export default async function AttendPage({ params, searchParams }: Props) {
       sessionId={session.id}
       lectureName={session.lecture_name}
       token={t}
+      geoEnabled={session.geo_enabled ?? false}
     />
   )
 }
